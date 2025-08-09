@@ -20,7 +20,7 @@ A Python-based V2Ray client that supports VMess and VLESS protocols with automat
 ### Quick Start
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/v2ray_client.git
+git clone https://github.com/ramohamadh/V2rayClient.git
 cd v2ray_client
 
 # Install dependencies
