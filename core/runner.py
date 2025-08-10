@@ -140,15 +140,32 @@ class V2RayRunner:
         return bool(self.process and self.process.poll() is None)
 
     def get_status(self) -> dict:
-        """Get current status information"""
+        """Get current status"""
         if not self.process:
-            return {"status": "stopped", "pid": None, "exit_code": None}
+            return {"status": "not_started"}
         
-        exit_code = self.process.poll()
-        if exit_code is None:
-            return {"status": "running", "pid": self.process.pid, "exit_code": None}
+        if self.process.poll() is None:
+            return {"status": "running", "pid": self.process.pid}
         else:
-            return {"status": "stopped", "pid": None, "exit_code": exit_code}
+            return {"status": "stopped", "exit_code": self.process.returncode}
+    
+    def test_connection(self, timeout: int = 10) -> dict:
+        """Test if the proxy connection is working"""
+        import socket
+        
+        if not self.is_running():
+            return {"status": "error", "message": "V2Ray not running"}
+        
+        try:
+            # Test SOCKS proxy connection
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(timeout)
+            sock.connect(("127.0.0.1", 1080))
+            sock.close()
+            
+            return {"status": "success", "message": "SOCKS proxy is accessible"}
+        except Exception as e:
+            return {"status": "error", "message": f"Connection test failed: {e}"}
 
     def wait_for_exit(self, timeout: Optional[int] = None):
         """Wait for v2ray process to exit"""

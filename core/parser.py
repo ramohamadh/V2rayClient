@@ -199,7 +199,11 @@ def parse_vless_url(vless_url: str) -> Dict[str, Any]:
     if network == "ws":
         ws_settings = {}
         if query_params.get('path'):
-            ws_settings["path"] = query_params['path'][0]
+            path = query_params['path'][0]
+            # Remove leading slash if present for WebSocket path
+            if path.startswith('/'):
+                path = path[1:]
+            ws_settings["path"] = f"/{path}" if path else "/"
         if query_params.get('host'):
             ws_settings["headers"] = {"Host": query_params['host'][0]}
         if ws_settings:
@@ -259,13 +263,24 @@ def parse_vless_url(vless_url: str) -> Dict[str, Any]:
         
         if query_params.get('allowInsecure'):
             tls_settings["allowInsecure"] = query_params['allowInsecure'][0] == "1"
+        else:
+            # Default to false for security
+            tls_settings["allowInsecure"] = False
         
         if query_params.get('alpn'):
             alpn_values = query_params['alpn'][0].split(',')
             tls_settings["alpn"] = alpn_values
         
         if query_params.get('fp'):
-            tls_settings["fingerprint"] = query_params['fp'][0]
+            fp_value = query_params['fp'][0]
+            # Handle special fingerprint values
+            if fp_value == "random":
+                tls_settings["fingerprint"] = "random"
+            elif fp_value in ["chrome", "firefox", "safari", "edge", "360", "qq", "android", "ios", "random", "randomized"]:
+                tls_settings["fingerprint"] = fp_value
+            else:
+                # Default to chrome if unknown
+                tls_settings["fingerprint"] = "chrome"
         
         if tls_settings:
             stream_settings["tlsSettings"] = tls_settings

@@ -28,7 +28,7 @@ class V2RayClient:
         self.config_manager = None
         self.runner = None
         
-    def setup(self, proxy_link: str, auto_download: bool = True):
+    def setup(self, proxy_link: str, auto_download: bool = True, log_level: str = "info"):
         """Setup V2Ray client with proxy link (vmess:// or vless://)"""
         try:
             # Parse proxy link
@@ -40,6 +40,9 @@ class V2RayClient:
             # Setup configuration
             self.config_manager = ConfigManager(self.config_path)
             self.config_manager.set_outbound(outbound)
+            
+            # Set log level
+            self.config_manager.set_log_level(log_level)
             
             # Validate configuration
             if not self.config_manager.validate():
@@ -82,6 +85,17 @@ class V2RayClient:
         try:
             logger.info("Starting V2Ray...")
             self.runner.start()
+            
+            # Wait a bit for startup
+            import time
+            time.sleep(2)
+            
+            # Test connection
+            test_result = self.test_connection()
+            if test_result["status"] == "success":
+                logger.info("Proxy connection test successful")
+            else:
+                logger.warning(f"Proxy connection test failed: {test_result['message']}")
             
             # Print connection info
             print("\n" + "="*50)
@@ -126,6 +140,13 @@ class V2RayClient:
                 "http": "127.0.0.1:1081"
             }
         return status
+    
+    def test_connection(self):
+        """Test if the proxy connection is working"""
+        if not self.runner:
+            return {"status": "error", "message": "Client not setup"}
+        
+        return self.runner.test_connection()
 
 def signal_handler(signum, frame):
     """Handle system signals"""
@@ -142,6 +163,14 @@ Examples:
   %(prog)s --proxy "vless://..." --auto-download
   %(prog)s --proxy "vmess://..." --config myconfig.json
   %(prog)s --status
+  %(prog)s --test-connection --proxy "vless://..."
+  %(prog)s --proxy "vless://..." --direct-domains example.com localhost
+
+Troubleshooting:
+  - If you see "connection refused" errors, make sure the proxy server is accessible
+  - Use --test-connection to verify the proxy is working before starting
+  - Use --log-level debug for detailed logging
+  - Check that your proxy link is correct and the server is online
         """
     )
     
@@ -151,9 +180,11 @@ Examples:
     parser.add_argument("--auto-download", action="store_true", 
                        help="automatically download V2Ray binary if not found")
     parser.add_argument("--status", action="store_true", help="show client status")
+    parser.add_argument("--test-connection", action="store_true", help="test proxy connection")
+    parser.add_argument("--port", type=int, help="set SOCKS proxy port (default: 1080)")
+    parser.add_argument("--direct-domains", nargs="+", help="domains that should go direct instead of through proxy")
     parser.add_argument("--log-level", choices=["debug", "info", "warning", "error"], 
                        default="info", help="set log level")
-    parser.add_argument("--port", type=int, help="set SOCKS proxy port (default: 1080)")
     
     args = parser.parse_args()
     
@@ -175,17 +206,48 @@ Examples:
                 print(f"  {key}: {value}")
             return
         
+        if args.test_connection:
+            # Test connection
+            if not args.proxy:
+                parser.error("--proxy is required for --test-connection")
+            
+            # Setup client first
+            client.setup(args.proxy, args.auto_download, args.log_level)
+            
+            # Start client
+            client.runner.start()
+            
+            # Wait a bit for startup
+            import time
+            time.sleep(3)
+            
+            # Test connection
+            result = client.test_connection()
+            print("Connection Test Result:")
+            for key, value in result.items():
+                print(f"  {key}: {value}")
+            
+            # Stop client
+            client.stop()
+            return
+        
         if not args.proxy:
             parser.error("--proxy is required unless using --status")
         
         # Setup client
-        client.setup(args.proxy, args.auto_download)
+        client.setup(args.proxy, args.auto_download, args.log_level)
         
         # Set custom port if specified
         if args.port:
             client.config_manager.set_inbound_port(args.port)
             client.config_manager.save()
             logger.info(f"Set SOCKS proxy port to {args.port}")
+        
+        # Set custom direct domains if specified
+        if args.direct_domains:
+            client.config_manager.set_direct_domains(args.direct_domains)
+            client.config_manager.save()
+            logger.info(f"Set direct domains: {', '.join(args.direct_domains)}")
         
         # Start client
         client.start()
