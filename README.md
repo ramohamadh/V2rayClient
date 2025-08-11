@@ -55,6 +55,8 @@ python3 main.py --status
 - `--status`: Show current client status
 - `--log-level`: Set log level (debug, info, warning, error)
 - `--port`: Set custom port for SOCKS proxy
+- `--disable-tls`: Disable TLS encryption in proxy configuration
+- `--direct-domains`: Domains that should go direct instead of through proxy
 
 ### Example Proxy Links
 
@@ -106,6 +108,113 @@ v2ray_client/
 - HTTP, WebSocket, TCP transport
 - Full Reality protocol support (SNI, fingerprint, public key, etc.)
 
+## TLS Configuration
+
+### Disabling TLS
+If you encounter TLS-related issues or want to use the proxy without encryption, you can disable TLS:
+
+```bash
+# Disable TLS encryption
+python3 main.py --proxy "vless://..." --disable-tls --auto-download
+
+# Test connection without TLS
+python3 main.py --proxy "vless://..." --disable-tls --test-connection
+
+# Disable TLS with custom port and debug logging
+python3 main.py --proxy "vless://..." --disable-tls --port 1088 --log-level debug
+```
+
+### What Gets Disabled
+When you use `--disable-tls`, the following security settings are removed:
+
+**TLS Settings Removed:**
+- `security: "tls"` - TLS security protocol
+- `tlsSettings` - All TLS configuration (SNI, fingerprint, alpn, etc.)
+
+**Reality Settings Removed:**
+- `security: "reality"` - Reality security protocol  
+- `realitySettings` - All Reality configuration (public key, short ID, etc.)
+
+**What Remains:**
+- Transport protocol settings (WebSocket, HTTP, TCP)
+- Network configuration and path settings
+- All other non-security related settings
+
+### Use Cases for Disabling TLS:
+
+1. **Testing and Debugging**
+   - Troubleshoot connection issues
+   - Test proxy functionality without encryption overhead
+   - Debug server compatibility problems
+
+2. **Server Compatibility**
+   - Work with servers that don't support TLS
+   - Connect to servers with misconfigured TLS settings
+   - Bypass TLS-related connection errors
+
+3. **Performance Optimization**
+   - Reduce encryption overhead for faster connections
+   - Improve connection speed on low-end devices
+   - Minimize CPU usage
+
+4. **Development and Learning**
+   - Understand proxy behavior without encryption
+   - Test different transport protocols
+   - Learn about V2Ray configuration
+
+### Security Considerations
+
+⚠️ **Important Security Notes:**
+
+- **Traffic is Unencrypted**: All data transmitted without TLS is unencrypted
+- **Server Authentication**: Without TLS, you can't verify server identity
+- **Privacy Implications**: Your browsing activity may be visible to network administrators
+
+**Recommended Usage:**
+- ✅ Testing and development environments
+- ✅ Trusted private networks  
+- ✅ Debugging connection issues
+- ✅ Performance testing
+
+- ❌ Public Wi-Fi networks
+- ❌ Sensitive data transmission
+- ❌ Production environments without additional security
+
+**Note**: Disabling TLS will remove all security settings (TLS, Reality) from the configuration. Use only on trusted networks and for testing purposes.
+
+### Example Configuration Changes
+
+**Before (with TLS):**
+```json
+{
+  "streamSettings": {
+    "network": "ws",
+    "security": "tls",
+    "tlsSettings": {
+      "serverName": "example.com",
+      "fingerprint": "chrome"
+    },
+    "wsSettings": {
+      "path": "/path",
+      "headers": {"Host": "example.com"}
+    }
+  }
+}
+```
+
+**After (TLS disabled):**
+```json
+{
+  "streamSettings": {
+    "network": "ws",
+    "wsSettings": {
+      "path": "/path", 
+      "headers": {"Host": "example.com"}
+    }
+  }
+}
+```
+
 ## Troubleshooting
 
 ### Common Issues
@@ -122,6 +231,13 @@ v2ray_client/
 3. **Port already in use**
    - Change the port using `--port` option
    - Kill existing processes using the port
+
+4. **TLS/Encryption issues**
+   - Try using `--disable-tls` option
+   - Check if your server supports the security protocol
+   - Verify SNI and fingerprint settings
+   - Test connection without TLS first: `--disable-tls --test-connection`
+   - Check if server requires TLS (some servers only accept encrypted connections)
 
 ### Logs
 - Access logs: `access.log`

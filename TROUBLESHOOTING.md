@@ -33,6 +33,9 @@ python3 main.py --proxy "vless://..." --auto-download --test-connection
 
 # Use custom log level for debugging
 python3 main.py --proxy "vless://..." --auto-download --log-level debug
+
+# Disable TLS encryption if needed
+python3 main.py --proxy "vless://..." --disable-tls --auto-download
 ```
 
 ### Custom Direct Domains
@@ -88,6 +91,13 @@ pkill -f v2ray
 1. Make sure V2Ray started successfully
 2. Check that ports 1080 (SOCKS) and 1081 (HTTP) are not blocked
 3. Verify the configuration was generated correctly
+
+### Issue: TLS/Encryption errors
+**Solution**:
+1. Try using `--disable-tls` option to remove encryption
+2. Check if your server supports the security protocol being used
+3. Verify SNI and fingerprint settings in your proxy link
+4. Use `--log-level debug` to see detailed TLS error messages
 
 ## Configuration Details
 

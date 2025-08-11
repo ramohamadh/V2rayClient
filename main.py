@@ -28,12 +28,17 @@ class V2RayClient:
         self.config_manager = None
         self.runner = None
         
-    def setup(self, proxy_link: str, auto_download: bool = True, log_level: str = "info"):
+    def setup(self, proxy_link: str, auto_download: bool = True, log_level: str = "info", disable_tls: bool = False):
         """Setup V2Ray client with proxy link (vmess:// or vless://)"""
         try:
             # Parse proxy link
             logger.info("Parsing proxy link...")
             outbound = parse_proxy_url(proxy_link)
+            
+            # Disable TLS if requested
+            if disable_tls:
+                logger.info("Disabling TLS encryption...")
+                outbound = self._disable_tls_in_outbound(outbound)
             
             logger.info(f"Parsed {outbound['protocol']} link successfully")
             
@@ -65,6 +70,37 @@ class V2RayClient:
         except Exception as e:
             logger.error(f"Setup failed: {e}")
             raise
+    
+    def _disable_tls_in_outbound(self, outbound: dict) -> dict:
+        """Disable TLS encryption in outbound configuration"""
+        # Create a copy to avoid modifying the original
+        modified_outbound = outbound.copy()
+        
+        # Check if streamSettings exist
+        if "streamSettings" in modified_outbound:
+            stream_settings = modified_outbound["streamSettings"]
+            
+            # Remove security settings
+            if "security" in stream_settings:
+                logger.info(f"Removing security: {stream_settings['security']}")
+                del stream_settings["security"]
+            
+            # Remove TLS settings
+            if "tlsSettings" in stream_settings:
+                logger.info("Removing TLS settings")
+                del stream_settings["tlsSettings"]
+            
+            # Remove Reality settings
+            if "realitySettings" in stream_settings:
+                logger.info("Removing Reality settings")
+                del stream_settings["realitySettings"]
+            
+            # If streamSettings is now empty, remove it entirely
+            if not stream_settings:
+                del modified_outbound["streamSettings"]
+        
+        logger.info("TLS encryption disabled successfully")
+        return modified_outbound
     
     def _download_v2ray(self):
         """Download V2Ray binary"""
@@ -165,12 +201,14 @@ Examples:
   %(prog)s --status
   %(prog)s --test-connection --proxy "vless://..."
   %(prog)s --proxy "vless://..." --direct-domains example.com localhost
+  %(prog)s --proxy "vless://..." --disable-tls
 
 Troubleshooting:
   - If you see "connection refused" errors, make sure the proxy server is accessible
   - Use --test-connection to verify the proxy is working before starting
   - Use --log-level debug for detailed logging
   - Check that your proxy link is correct and the server is online
+  - If you have TLS issues, try using --disable-tls option
         """
     )
     
@@ -185,6 +223,8 @@ Troubleshooting:
     parser.add_argument("--direct-domains", nargs="+", help="domains that should go direct instead of through proxy")
     parser.add_argument("--log-level", choices=["debug", "info", "warning", "error"], 
                        default="info", help="set log level")
+    parser.add_argument("--disable-tls", action="store_true", 
+                       help="disable TLS encryption in the proxy configuration")
     
     args = parser.parse_args()
     
@@ -212,7 +252,7 @@ Troubleshooting:
                 parser.error("--proxy is required for --test-connection")
             
             # Setup client first
-            client.setup(args.proxy, args.auto_download, args.log_level)
+            client.setup(args.proxy, args.auto_download, args.log_level, args.disable_tls)
             
             # Start client
             client.runner.start()
@@ -235,7 +275,7 @@ Troubleshooting:
             parser.error("--proxy is required unless using --status")
         
         # Setup client
-        client.setup(args.proxy, args.auto_download, args.log_level)
+        client.setup(args.proxy, args.auto_download, args.log_level, args.disable_tls)
         
         # Set custom port if specified
         if args.port:
