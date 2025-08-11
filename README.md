@@ -266,6 +266,19 @@ python3 test_client.py
 4. Add tests if applicable
 5. Submit a pull request
 
+## Third-party Components and Sources
+
+- **V2Ray Core (binary)**: Auto-downloaded from the latest releases of [v2fly/v2ray-core](https://github.com/v2fly/v2ray-core) via the GitHub Releases API. Licensed under MIT.
+- **GeoSite domains (geosite.dat)**: From [v2fly/domain-list-community](https://github.com/v2fly/domain-list-community). Licensed under MIT.
+- **GeoIP database (geoip.dat)**: From [v2fly/geoip](https://github.com/v2fly/geoip), which is built from [MaxMind GeoLite2](https://www.maxmind.com) data. GeoLite2 is licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+- **GitHub API**: Used to query latest V2Ray releases in `core/downloader.py`.
+- **Python packages** (from `requirements.txt`):
+  - [requests](https://pypi.org/project/requests/) (HTTP client)
+  - [urllib3](https://pypi.org/project/urllib3/) (HTTP library, dependency of requests)
+  - [cryptography](https://pypi.org/project/cryptography/) (crypto primitives)
+  - [PySocks](https://pypi.org/project/PySocks/) (SOCKS support for testing and clients)
+- **Test endpoints**: `test_proxy.py` uses [httpbin](https://httpbin.org) for simple HTTP connectivity checks.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
