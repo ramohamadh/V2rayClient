@@ -64,12 +64,25 @@ python3 main.py --proxy "vless://..." --test-connection
 # Start V2Ray in background
 python3 main.py --proxy "vless://..." --auto-download &
 
-# Test proxy functionality
+# Test proxy functionality and speed
 python3 test_proxy.py
 
 # Stop V2Ray
 pkill -f v2ray
 ```
+
+### 3. Speed Test Details
+The `test_proxy.py` script includes comprehensive speed testing:
+
+- **Test Files**: Downloads 5MB, 10MB, and 25MB files from Cloudflare
+- **Speed Calculation**: Measures download speed in Mbps
+- **Results Display**: Shows average, maximum, and minimum speeds
+- **Speed Rating**: 
+  - 🚀 Excellent: 50+ Mbps
+  - ⚡ Good: 25-50 Mbps
+  - 📶 Fair: 10-25 Mbps
+  - 🐌 Slow: 5-10 Mbps
+  - ❌ Very Slow: <5 Mbps
 
 ## Common Issues and Solutions
 
