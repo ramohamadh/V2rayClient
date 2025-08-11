@@ -296,5 +296,3 @@ If you encounter any issues or have questions:
 - Review the logs for error details
 
 ---
-
-**Note**: This client is for educational and personal use. Please ensure you comply with your local laws and regulations regarding proxy usage. 
